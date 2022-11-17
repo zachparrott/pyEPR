@@ -20,8 +20,8 @@ for i in range(1,3+1): # specify N number of junctions
     project_info.junctions['j'+i] = {'Lj_variable':'Lj'+i, 'rect':'Qubit'+i, 'line': 'Polyline'+i, 'length':30*10**-6}
 
 # 2b. Dissipative elements.
-#project_info.dissipative.dielectrics_bulk    = ['subs_Q1']    # supply names here, there are more options in project_info.dissipative.
-#project_info.dissipative.dielectric_surfaces = ['interface']
+#project_info.dissipative['dielectrics_bulk']    = ['subs_Q1']    # supply names here, there are more options in project_info.dissipative.
+#project_info.dissipative['dielectric_surfaces'] = ['interface']
 
 #%%
 # 3.  Run analysis
@@ -161,7 +161,7 @@ if 0: # update all passes
 def do_plot(RES):
     '''
         Make sure
-            %matplolib qt
+            %matplotlib qt
         TODO: in future just setup once, and then update lines only
     '''
     # live plot https://stackoverflow.com/questions/11874767/how-do-i-plot-in-real-time-in-a-while-loop-using-matplotlib

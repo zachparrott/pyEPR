@@ -13,7 +13,7 @@ class MatrixOps(object):
     @staticmethod
     def cos(op_cos_arg: np.ndarray):
         """
-        Make cosine opertor matrix from arguemnt  op_cos_arg
+        Make cosine operator matrix from argument  op_cos_arg
 
             op_cos_arg (np.ndarray) : argumetn of the cosine
         """
@@ -47,7 +47,7 @@ class HamOps(object):
     @staticmethod
     def closest_state_to(s: np.ndarray, energyMHz, evecs):
         """
-        Returns the enery of the closest state to s
+        Returns the energy of the closest state to s
         """
         distance = lambda s2: np.linalg.norm(s.T.conj() * s2[1])
         return max(zip(energyMHz, evecs), key=distance)
@@ -67,7 +67,7 @@ class HamOps(object):
         """
         Return quantum numbers in terms of the undiagonalized eigenbasis.
         """
-        #  to do: need to turn Fock_max into arb algo on each mdoe
+        #  to do: need to turn Fock_max into arb algo on each mode
 
         def fock_state_on(d):
             return HamOps.fock_state_on(d, fock_trunc, N_modes)

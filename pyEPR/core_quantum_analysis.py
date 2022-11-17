@@ -52,18 +52,18 @@ class HamiltonianResultsContainer(OrderedDict):
 
     def __init__(self, dict_file=None, data_dir=None):
         """ input:
-           dict file - 1. ethier None to create an empty results hamilitoninan as
+           dict file - 1. either None to create an empty results hamiltonian as
                        as was done in the original code
 
                        2. or a string with the name of the file where the file of the
-                       previously saved HamiltonianResultsContainer instatnce we wish
+                       previously saved HamiltonianResultsContainer instance we wish
                        to load
 
                        3. or an existing instance of a dict class which will be
                        upgraded to the HamiltonianResultsContainer class
 
             data_dir -  the directory in which the file is to be saved or loaded
-                        from, defults to the config.root_dir
+                        from, defaults to the config.root_dir
         """
 
         super().__init__()
@@ -129,7 +129,7 @@ class HamiltonianResultsContainer(OrderedDict):
         for key, val in add_dic.items():
             # TODO remove all copies of same data
             #  if key in self.keys():
-                #raise ValueError('trying to overwrite an exsiting varation')
+                #raise ValueError('trying to overwrite an existing variation')
             self[str(int(key)+Init_number_of_keys)] = val
         return 1
 
@@ -141,7 +141,7 @@ class HamiltonianResultsContainer(OrderedDict):
             z {pd.DataFrame} -- Input
 
         Returns:
-            Sorted DtaaFrame
+            Sorted DataFrame
         """
         if isinstance(z, pd.DataFrame):
             return z.sort_index(axis=1)
@@ -157,7 +157,7 @@ class HamiltonianResultsContainer(OrderedDict):
 
         QUANTITIES:
             `f_0`  : HFSS Frequencies
-            `f_1`  : Analyutical first order PT on the p=4 term of the cosine
+            `f_1`  : Analytical first order PT on the p=4 term of the cosine
             `f_ND` : Numerically diagonalized
             `chi_O1`: chi matrix from 1st order PT
 
@@ -169,7 +169,7 @@ class HamiltonianResultsContainer(OrderedDict):
             vs {str} -- Swept against (default: {'variation'})
             to_dataframe {bool} -- convert or not the result to dataframe.
                          Make sure to call only if it can be converted to a DataFrame or can
-                         be concatinated into a multi-index DataFrame
+                         be concatenated into a multi-index DataFrame
 
         Returns:
             [type] -- [description]
@@ -192,7 +192,7 @@ class HamiltonianResultsContainer(OrderedDict):
             z = sort_df_col(pd.DataFrame(z))
             if self.sort_index:
                 z = self._do_sort_index(z)
-            z.index.name = 'eigenmode'
+            # z.index.name = 'eigenmode'
             z.columns.name = vs
 
         return z
@@ -241,7 +241,7 @@ class QuantumAnalysis(object):
         results = DistributedAnalysis.results_variations_on_inside(
             self.data.results)
 
-        # Convinience functions
+        # Convenience functions
         self.variations = variations or list(self.data.results.keys())
         self._hfss_variables = results['hfss_variables']
         self.freqs_hfss = results['freqs_hfss_GHz']
@@ -251,11 +251,12 @@ class QuantumAnalysis(object):
         self.Cjs = results['Cjs']  # DataFrame
         self.OM = results['Om']  # dict of dataframes
         self.PM = results['Pm']  # participation matrices - raw, unnormed here
-        # participation matrices for capactive elements
+        # participation matrices for capacitive elements
         self.PM_cap = results['Pm_cap']
         self.SM = results['Sm']  # sign matrices
         self.I_peak = results['I_peak']
         self.V_peak = results['V_peak']
+        self.modes = results['modes']
 
         self.sols = results['sols']
         self.ansys_energies = results.get('ansys_energies', {})
@@ -264,7 +265,7 @@ class QuantumAnalysis(object):
         self.convergence = results['convergence']
         self.convergence_f_pass = results['convergence_f_pass']
 
-        self.n_modes = self.sols[self.variations[0]].shape[0]
+        self.n_modes = len(self.modes[self.variations[0]])
         self._renorm_pj = config.epr.renorm_pj
 
         # Unique variation params -- make a get function
@@ -293,7 +294,7 @@ class QuantumAnalysis(object):
 
     def get_vs_variable(self, swp_var, attr: str):
         """
-        Convert the index of a dicitoanry that is stored here from
+        Convert the index of a dictionary that is stored here from
         variation number to variable value.
 
         Args:
@@ -307,10 +308,10 @@ class QuantumAnalysis(object):
 
     def get_variable_vs(self, swpvar, lv=None):
         """ lv is list of variations (example ['0', '1']), if None it takes all variations
-            swpvar is the variable by which to orginize
+            swpvar is the variable by which to organize
 
             return:
-            ordered dicitonary of key which is the variation number and the magnitude
+            ordered dictionary of key which is the variation number and the magnitude
             of swaver as the item
         """
         ret = OrderedDict()
@@ -336,7 +337,7 @@ class QuantumAnalysis(object):
             has a specific value lv is list of variations (example ['0', '1']),
             if None it takes all variations
             swpvar is a string and the name of the variable we wish to filter
-            value is the value of swapvr in which we are intrested
+            value is the value of swapvr in which we are interested
 
             returns lv - a list of the variations for which swavr==value
             """
@@ -430,7 +431,7 @@ class QuantumAnalysis(object):
 
     def get_Ecs(self, variation):
         ''' ECs in GHz
-        Returns as padnas series
+        Returns as pandas series
         '''
         Cs = self.Cjs[variation]
         return Convert.Ec_from_Cs(Cs,  units_in='F', units_out='GHz')
@@ -442,11 +443,10 @@ class QuantumAnalysis(object):
         '''
         See analyze_variation for full documentation
 
-        Specific params:
-        --------------------
-            variations : None returns all_variations otherwis this is a list with number
-                         as strings ['0', '1']
-            nalyze_previous :set to true if you wish to overwrite previous analysis
+        Args:
+            variations: None returns all_variations otherwise this is a list with number as strings ['0', '1']
+            analyze_previous: set to true if you wish to overwrite previous analysis
+            **kwargs: Keyword arguments passed to :func:`~pyEPR.QuantumAnalysis.analyze_variation`.
         '''
 
         result = OrderedDict()
@@ -459,6 +459,7 @@ class QuantumAnalysis(object):
                 result[variation] = self.results[variation]
             else:
                 result[variation] = self.analyze_variation(variation, **kwargs)
+
 
         self.results.save()
 
@@ -495,7 +496,7 @@ class QuantumAnalysis(object):
             #s = self.sols[variation]
             # sum of participation energies as calculated by global UH and UE
             # U_mode = s['U_E'] # peak mode energy; or U bar as i denote it sometimes
-            # We need to add the capactiro here, and maybe take the mean of that
+            # We need to add the capacitor here, and maybe take the mean of that
 
             energies = self._get_ansys_total_energies(variation)
 
@@ -515,7 +516,7 @@ class QuantumAnalysis(object):
             # this is not the correct scaling yet! WARNING. Factors of 2 laying around too
             # these numbers are a bit all over the place for now. very small
 
-            if _renorm_pj == True or _renorm_pj is 1:
+            if _renorm_pj == True or _renorm_pj == 1:
                 idx = Pm > -1E6  # everywhere scale
                 idx_cap = Pm_cap > -1E6
             elif _renorm_pj == 2:
@@ -523,7 +524,7 @@ class QuantumAnalysis(object):
                 idx_cap = Pm_cap > 0.15
             else:
                 raise NotImplementedError(
-                    "Unkown _renorm_pj argument or config values!")
+                    "Unknown _renorm_pj argument or config values!")
 
             if print_:
                 # \nPm_cap_norm=\n{Pm_cap_norm}")
@@ -547,7 +548,7 @@ class QuantumAnalysis(object):
         if np.any(Pm < 0.0):
             print_color("  ! Warning:  Some p_mj was found <= 0. This is probably a numerical error,'\
                 'or a super low-Q mode.  We will take the abs value.  Otherwise, rerun with more precision,'\
-                'inspect, and do due dilligence.)")
+                'inspect, and do due diligence.)")
             print(Pm, '\n')
             Pm = np.abs(Pm)
 
@@ -558,20 +559,20 @@ class QuantumAnalysis(object):
 
     def get_epr_base_matrices(self, variation, _renorm_pj=None, print_=False):
         r'''
-        Return the key matricies used in the EPR method for analytic calcualtions.
+        Return the key matrices used in the EPR method for analytic calculations.
 
         All as matrices
-            :PJ: Participatuion matrix, p_mj
+            :PJ: Participation matrix, p_mj
             :SJ: Sign matrix, s_mj
             :Om: Omega_mm matrix (in GHz) (\hbar = 1) Not radians.
             :EJ: E_jj matrix of Josephson energies (in same units as hbar omega matrix)
             :PHI_zpf: ZPFs in units of \phi_0 reduced flux quantum
-            :PJ_cap: capactive particiaption matrix
+            :PJ_cap: capacitive participation matrix
 
             Return all as *np.array*
                 PM, SIGN, Om, EJ, Phi_ZPF
         '''
-        # TODO: superseed by Convert.ZPF_from_EPR
+        # TODO: supersede by Convert.ZPF_from_EPR
 
         res = self._get_participation_normalized(
             variation, _renorm_pj=_renorm_pj, print_=print_)
@@ -598,43 +599,45 @@ class QuantumAnalysis(object):
         return PJ, SJ, Om, EJ, PHI_zpf, PJ_cap, n_zpf                 # All as np.array
 
     def analyze_variation(self,
-                          variation: List[str],
+                          variation: str,
                           cos_trunc: int = None,
                           fock_trunc: int = None,
                           print_result: bool = True,
                           junctions: List = None,
-                          modes: List[int] = None):
-        # TODO avoide analyzing a previously analyzed variation
+                          modes: List = None):
+        # TODO avoid analyzing a previously analyzed variation
         '''
         Core analysis function to call!
 
         Args:
-        ---------------
             junctions: list or slice of junctions to include in the analysis.
                 None defaults to analysing all junctions
             modes: list or slice of modes to include in the analysis.
-                    None defaults to analysing all modes
-
+                None defaults to analysing all modes
 
         Returns:
-        ----------------
-            f_0 [MHz]    : Eigenmode frequencies computed by HFSS; i.e., linear freq returned in GHz
-            f_1 [MHz]    : Dressed mode frequencies (by the non-linearity; e.g., Lamb shift, etc. ).
-                           If numerical diagonalizaiton is run, then we return the numerically diagonalizaed
-                           frequencies, otherwise, use 1st order pertuirbation theory on the 4th order
-                           expansion of the cosine.
-            f_ND [MHz]   : Numerical diagonalizaiton
-            chi_O1 [MHz] : Analytic expression for the chis based on a cos trunc to 4th order, and using 1st
-                           order perturbation theory. Diag is anharmonicity, off diag is full cross-Kerr.
-            chi_ND [MHz] : Numerically diagonalized chi matrix. Diag is anharmonicity, off diag is full
-                           cross-Kerr.
+            dict: Dictionary containing at least the following:
+                * f_0 [MHz]: Eigenmode frequencies computed by HFSS; i.e., linear freq returned in GHz
+                * f_1 [MHz]: Dressed mode frequencies (by the non-linearity; e.g., Lamb shift, etc. ).
+                  Result based on 1st order perturbation theory on the 4th order expansion of the cosine.
+                * f_ND [MHz]: Numerical diagonalization result of dressed mode frequencies.
+                  only available if `cos_trunc` and  `fock_trunc` are set (non None).
+                * chi_O1 [MHz]: Analytic expression for the chis based on a cos trunc to 4th order, and using 1st
+                  order perturbation theory. Diag is anharmonicity, off diag is full cross-Kerr.
+                * chi_ND [MHz]: Numerically diagonalized chi matrix. Diag is anharmonicity, off diag is full
+                  cross-Kerr.
         '''
 
         # ensuring proper matrix dimensionality when slicing
         junctions = (junctions,) if type(junctions) is int else junctions
 
-        # ensuring proper matrix dimensionality when slicing
-        modes = (modes,) if type(modes) is int else modes
+        if modes is None:
+            modes = list(range(self.n_modes))
+        
+        tmp_n_modes = self.n_modes
+        tmp_modes = self.modes[variation]
+        self.n_modes = len(modes)
+        self.modes[variation] = modes
 
         if (fock_trunc is None) or (cos_trunc is None):
             fock_trunc = cos_trunc = None
@@ -648,7 +651,7 @@ class QuantumAnalysis(object):
         # Get matrices
         PJ, SJ, Om, EJ, PHI_zpf, PJ_cap, n_zpf = self.get_epr_base_matrices(
             variation)
-        freqs_hfss = self.freqs_hfss[variation].values
+        freqs_hfss = self.freqs_hfss[variation].values[(modes)]
         Ljs = self.Ljs[variation].values
 
         # reduce matrices to only include certain modes/junctions
@@ -661,11 +664,11 @@ class QuantumAnalysis(object):
             PJ_cap = PJ_cap[:, junctions]
 
         if modes is not None:
-            freqs_hfss = freqs_hfss[modes, ]
-            PJ = PJ[modes, :]
-            SJ = SJ[modes, :]
-            Om = Om[modes, :][:, modes]
-            PHI_zpf = PHI_zpf[modes, :]
+            freqs_hfss = freqs_hfss[range(len(self.modes[variation])), ]
+            PJ = PJ[range(len(modes)), :]
+            SJ = SJ[range(len(modes)), :]
+            Om = Om[range(len(modes)), :][:, range(len(modes))]
+            PHI_zpf = PHI_zpf[range(len(modes)), :]
             PJ_cap = PJ_cap[:, junctions]
 
         # Analytic 4-th order
@@ -685,43 +688,83 @@ class QuantumAnalysis(object):
             f1_ND, CHI_ND = None, None
 
         result = OrderedDict()
-        result['f_0'] = self.freqs_hfss[variation] * \
-            1E3  # MHz - obtained directly from HFSS
+        result['f_0'] = self.freqs_hfss[variation][modes] * 1E3  # MHz - obtained directly from HFSS
         result['f_1'] = pd.Series(f1s)*1E3     # MHz
         result['f_ND'] = pd.Series(f1_ND)*1E-6  # MHz
         result['chi_O1'] = pd.DataFrame(CHI_O1)
         result['chi_ND'] = pd.DataFrame(CHI_ND)   # why dataframe?
         result['ZPF'] = PHI_zpf
         result['Pm_normed'] = PJ
-        result['Pm_raw'] = self.PM[variation]
-        result['Pm_cap'] = PJ_cap  # normed
+        try:
+            result['Pm_raw'] = self.PM[variation][self.PM[variation].columns[0]][modes]#TODO change the columns to junctions
+        except:
+             result['Pm_raw'] = self.PM[variation]
         _temp = self._get_participation_normalized(
             variation, _renorm_pj=self._renorm_pj, print_=print_result)
-        result['_Pm_norm'] = _temp['Pm_norm']
-        result['_Pm_cap_norm'] = _temp['Pm_cap_norm']
+        result['_Pm_norm'] = _temp['Pm_norm'][modes]
+        result['_Pm_cap_norm'] = _temp['Pm_cap_norm'][modes]
 
         # just propagate
         result['hfss_variables'] = self._hfss_variables[variation]
         result['Ljs'] = self.Ljs[variation]
         result['Cjs'] = self.Cjs[variation]
-        result['Q_coupling'] = self.Qm_coupling[variation]
-        result['Qs'] = self.Qs[variation]
+        try:
+            result['Q_coupling'] = self.Qm_coupling[variation][self.Qm_coupling[variation].columns[junctions]][modes]#TODO change the columns to junctions
+        except:
+            result['Q_coupling'] = self.Qm_coupling[variation]
+        
+        try:
+            result['Qs'] = self.Qs[variation][self.PM[variation].columns[junctions]][modes] #TODO change the columns to junctions
+        except:
+            result['Qs'] = self.Qs[variation][modes]
+
+        result['sol'] = self.sols[variation]
+
         result['fock_trunc'] = fock_trunc
         result['cos_trunc'] = cos_trunc
 
         self.results[variation] = result
         self.results.save()
-
+        
         if print_result:
             self.print_variation(variation)
             self.print_result(result)
-
+    
+        self.n_modes = tmp_n_modes # TODO is this smart should consider defining the modes of interest in the initialisation of the quantum object
+        self.modes[variation]=tmp_modes 
         return result
+
+    def full_report_variations(self, var_list: list=None):
+        """see full_variation_report"""
+        if var_list is None:
+            var_list = self.variations
+        for variation in var_list: 
+            self.full_variation_report(variation)
+    
+    def full_variation_report(self, variation):
+        """
+        prints the results and parameters of a specific variation
+
+        Parameters
+        ----------
+        variation : int or str
+            the variation to be printed .
+
+        Returns
+        -------
+        None.
+
+        """
+        self.print_variation(variation)
+        
+        self.print_result(variation)
 
     def print_variation(self, variation):
         """
         Utility reporting function
         """
+        if variation is int: variation = str(variation)
+
         if len(self.hfss_vars_diff_idx) > 0:
             print('\n*** Different parameters')
             display(self._hfss_variables[self.hfss_vars_diff_idx][variation])
@@ -737,8 +780,9 @@ class QuantumAnalysis(object):
         """
         Utility reporting function
         """
+        if type(result) is str or type(result) is int: result = self.results[str(result)]
 
-        # TODO: actually make into dataframe with mode labela and junction labels
+        # TODO: actually make into dataframe with mode labels and junction labels
         pritm = lambda x, frmt="{:9.2g}": print_matrix(x, frmt=frmt)
 
         print('*** P (participation matrix, normalized.)')
@@ -769,7 +813,7 @@ class QuantumAnalysis(object):
             dic['x_label'] = var_name
             dic['x'] = self.get_variable_value(var_name, lv=lv)
         else:
-            raise ValueError('more than one hfss variablae changes each time')
+            raise ValueError('more than one hfss variable changes each time')
 
         return lv, dic
 
@@ -790,7 +834,7 @@ class QuantumAnalysis(object):
         """Plot results versus variation
 
         Keyword Arguments:
-            swp_variable {str} -- Variable against which we swept. If noen, then just
+            swp_variable {str} -- Variable against which we swept. If none, then just
                                     take the variation index (default: {None})
             variations {list} -- [description] (default: {None})
             fig {[type]} -- [description] (default: {None})
@@ -798,7 +842,6 @@ class QuantumAnalysis(object):
         Returns:
             fig, axs
         """
-
         x_label = x_label or swp_variable
 
         # Create figure and axes
@@ -808,13 +851,13 @@ class QuantumAnalysis(object):
             axs = fig.axs
 
         ############################################################################
-        ### Axis: Frequencies
+        # Axis: Frequencies
         f0 = self.results.get_frequencies_HFSS(
-            variations=variations, vs=swp_variable).transpose()
+            variations=variations, vs=swp_variable).transpose().sort_index(key=lambda x : x.astype(int))
         f1 = self.results.get_frequencies_O1(
-            variations=variations, vs=swp_variable).transpose()
+            variations=variations, vs=swp_variable).transpose().sort_index(key=lambda x : x.astype(int))
         f_ND = self.results.get_frequencies_ND(
-            variations=variations, vs=swp_variable).transpose()
+            variations=variations, vs=swp_variable).transpose().sort_index(key=lambda x : x.astype(int))
         # changed by Asaf from f0 as not all modes are always analyzed
         mode_idx = list(f1.columns)
         n_modes = len(mode_idx)
@@ -822,7 +865,7 @@ class QuantumAnalysis(object):
         ax = axs[0, 0]
         ax.set_title('Modal frequencies (MHz)')
 
-        # TODO: shouldmove these kwargs to the config
+        # TODO: should move these kwargs to the config
         cmap = cmap_discrete(n_modes)
         kw = dict(ax=ax, color=cmap, legend=False, lw=0, ms=0)
 
@@ -842,27 +885,34 @@ class QuantumAnalysis(object):
         plt_me_line.plot(**{**kw, **dict(lw=1, alpha=0.6, color='grey')})
 
         ############################################################################
-        # Axis: Quality factors'
+        # Axis: Quality factors
         Qs = self.get_quality_factors(swp_variable=swp_variable)
         Qs = Qs if variations is None else Qs[variations]
-        Qs = Qs.transpose()
+        Qs = Qs.transpose().sort_index(key=lambda x : x.astype(int))
 
         ax = axs[1, 0]
         ax.set_title('Quality factors')
         Qs.plot(ax=ax, lw=0, marker=markerf1, ms=4,
                 legend=True, zorder=20, color=cmap)
         Qs.plot(ax=ax, lw=1, alpha=0.2, color='grey', legend=False)
-        ax.set_yscale('log')
+        
+        df_Qs = np.isinf(Qs)
+        # pylint: disable=E1101 
+        # Instance of 'ndarray' has no 'values' member (no-member)
+        Qs_val = df_Qs.values
+        Qs_inf = Qs_val.sum()
+        if not (len(Qs) == 0 or Qs_inf > 0): 
+          ax.set_yscale('log')
 
         ############################################################################
-        ### Axis: Alpha and chi
+        # Axis: Alpha and chi
 
         axs[0][1].set_title('Anharmonicities (MHz)')
         axs[1][1].set_title('Cross-Kerr frequencies (MHz)')
 
         def plot_chi_alpha(chi, primary):
             """
-            Intenral function to plot chi and then also to plot alpha
+            Internal function to plot chi and then also to plot alpha
             """
             idx = pd.IndexSlice
             kw1 = dict(lw=0, ms=4,  marker='o' if primary else 'x')
@@ -872,6 +922,7 @@ class QuantumAnalysis(object):
             ax = axs[0, 1]
             for i, mode in enumerate(mode_idx):  # mode index number, mode index
                 alpha = chi.loc[idx[:, mode], mode].unstack(1)
+                alpha.columns = [mode]
                 alpha.plot(ax=ax, label=mode, color=cmap[i], **kw1)
                 if primary:
                     alpha.plot(ax=ax, **kw2)
@@ -884,15 +935,12 @@ class QuantumAnalysis(object):
                 for i, mode2 in enumerate(mode_idx):
                     if int(mode2) > int(mode):
                         chi_element = chi.loc[idx[:, mode], mode2].unstack(1)
-                        chi_element.plot(
-                            ax=ax, label=f"{mode},{mode2}", color=cmap[i], **kw1)
-
+                        chi_element.plot(ax=ax, label=f"{mode},{mode2}", color=cmap[i], **kw1)
                         if primary:
                             chi_element.plot(ax=ax, **kw2)
 
         def do_legends():
-            legend_translucent(axs[0][1],  leg_kw=dict(
-                fontsize=7, title='Mode'))
+            legend_translucent(axs[0][1],  leg_kw=dict(fontsize=7, title='Mode'))
             legend_translucent(axs[1][1],  leg_kw=dict(fontsize=7))
 
         chiO1 = self.get_chis(variations=variations,
@@ -960,7 +1008,7 @@ class QuantumAnalysis(object):
             index: eigenmode label
             columns: variation label
         """
-        label = 'f_1' if numeric else 'f_ND'
+        label = 'f_ND' if numeric else 'f_1'
         return self.results.vs_variations(label, vs=swp_variable, to_dataframe=True, variations=variations)
 
     def get_quality_factors(self, swp_variable='variation', variations: list = None):
@@ -976,11 +1024,11 @@ class QuantumAnalysis(object):
                            _normed=True):
         """
 
-            inductive (bool): EPR forjunciton inductance when True, else for capactiors
+            inductive (bool): EPR for junction inductance when True, else for capacitors
 
         Returns:
         ----------------
-        Returns a multindex dataframe:
+        Returns a multiindex dataframe:
             index 0: sweep variable
             index 1: mode number
             column: junction number
@@ -1130,7 +1178,7 @@ class QuantumAnalysis(object):
 
     def quick_plot_convergence(self, ax = None):
         """
-        Plot a report of the Ansys converngece vs pass number ona twin axis
+        Plot a report of the Ansys convergence vs pass number ona twin axis
         for the number of tets and the max delta frequency of the eignemode.
         """
         ax = ax or plt.gca()
@@ -1146,7 +1194,7 @@ class QuantumAnalysis(object):
 
 
 def extract_dic(name=None, file_name=None):
-    """#name is the name of the dictionry as saved in the npz file if it is None,
+    """#name is the name of the dictionary as saved in the npz file if it is None,
     the function will return a list of all dictionaries in the npz file
     file name is the name of the npz file"""
     with np.load(file_name, allow_pickle=True) as f:

@@ -11,13 +11,13 @@ if 0:
     # Specify the HFSS project to be analyzed
     project_info = ProjectInfo(r"C:\Users\awe4\Documents\Backed\hfss_simulations\11ghz\\")
     project_info.project_name  = '11ghz_alec'  # Name of the project file (string). "None" will get the current active one.
-    project_info.design_name   = '11ghz_design1'  # Name of the desgin file (string). "None" will get the current active one.
+    project_info.design_name   = '11ghz_design1'  # Name of the design file (string). "None" will get the current active one.
     project_info.setup_name    = None    # Name of the setup(string). "None" will get the current active one.
 
     project_info.junctions['bot_junc'] = {'rect':'bot_junction',  'line': 'bot_junc_line', 'Lj_variable':'bot_lj', 'length':0.0001}
     project_info.junctions['top_junc'] = {'rect':'top_junction',    'line': 'top_junc_line',   'Lj_variable':'top_lj',   'length':0.0001}
 
-    project_info.dissipative.dielectric_surfaces = None         # supply names here, there are more options in  project_info.dissipative.
+    project_info.dissipative['dielectric_surfaces'] = None         # supply names here, there are more options in  project_info.dissipative.
 
     epr_hfss    = DistributedAnalysis(project_info)
     epr_hfss.do_EPR_analysis()
