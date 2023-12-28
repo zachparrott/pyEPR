@@ -932,7 +932,7 @@ class DistributedAnalysis(object):
         '''
         if U_E is None:
             U_E = self.calc_energy_electric(variation)
-        Qp = pd.Series({})
+        Qp = pd.Series({}, dtype='float64')
 
         freq = freq_GHz * 1e9  # freq in Hz
         for port_nm, port in self.pinfo.ports.items():
@@ -980,7 +980,7 @@ class DistributedAnalysis(object):
         method = self.pinfo.options.method_calc_P_mj
         I_peak_ = {}
         V_peak_ = {}
-        Sj = pd.Series({})
+        Sj = pd.Series({}, dtype='float64')
         for j_name, j_props in self.pinfo.junctions.items():
             logger.debug(f'Calculating participations for {(j_name, j_props)}')
             Lj = Ljs[j_name]
@@ -1100,8 +1100,8 @@ class DistributedAnalysis(object):
             # for all variations and concat
             raise NotImplementedError()  # TODO
         else:
-            Ljs = pd.Series({})
-            Cjs = pd.Series({})
+            Ljs = pd.Series({}, dtype='float64')
+            Cjs = pd.Series({}, dtype='float64')
 
             for junc_name, val in self.pinfo.junctions.items():  # junction nickname
                 _variables = self._hfss_variables[variation]
@@ -1244,7 +1244,7 @@ class DistributedAnalysis(object):
                 self.set_mode(mode)
 
                 # Get HFSS  solved frequencies
-                _Om = pd.Series({})
+                _Om = pd.Series({}, dtype='float64')
                 temp_freq = freqs_bare_GHz[mode]
                 _Om['freq_GHz'] = temp_freq  # freq
                 Om[mode] = _Om
@@ -1301,24 +1301,20 @@ class DistributedAnalysis(object):
                 # get seam Q
                 if self.pinfo.dissipative['seams']:
                     for seam in self.pinfo.dissipative['seams']:
-                        sol = sol.append(self.get_Qseam(seam, mode, variation, self.U_H))
+                        sol = pd.concat([sol, self.get_Qseam(seam, mode, variation, self.U_H)])
 
                 # get Q dielectric
                 if self.pinfo.dissipative['dielectrics_bulk']:
                     for dielectric in self.pinfo.dissipative['dielectrics_bulk']:
-                        sol = sol.append(self.get_Qdielectric(
-                            dielectric, mode, variation, self.U_E))
+                        sol = pd.concat([sol, self.get_Qdielectric(dielectric, mode, variation, self.U_E)])
 
                 # get Q surface
                 if self.pinfo.dissipative['dielectric_surfaces']:
                     if self.pinfo.dissipative['dielectric_surfaces'] == 'all':
-                        sol = sol.append(
-                            self.get_Qsurface_all(mode, variation, self.U_E))
+                        sol = pd.concat([sol, self.get_Qsurface_all(mode, variation, self.U_E)])
                     else:
                         for surface, properties in self.pinfo.dissipative['dielectric_surfaces'].items():
-                            sol = sol.append(
-                                self.get_Qsurface(mode, variation, surface, self.U_E, properties)
-                            )
+                            sol = pd.concat([sol, self.get_Qsurface(mode, variation, surface, self.U_E, properties)])
 
                 SOL[mode] = sol
 
@@ -1579,7 +1575,7 @@ class DistributedAnalysis(object):
         # Properties of lines
         curves = [f"{report_name}:re(Mode({i})):Curve1" for i in range(
             1, 1+self.n_modes)]
-        set_property(report, 'Attributes', curves, 'Line Width', 3)
+        # set_property(report, 'Attributes', curves, 'Line Width', 3)
         set_property(report, 'Scaling',
                      f"{report_name}:AxisY1", 'Auto Units', False)
         set_property(report, 'Scaling', f"{report_name}:AxisY1", 'Units', 'g')
